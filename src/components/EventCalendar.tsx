@@ -1,4 +1,5 @@
 
+import { useState, useEffect } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
@@ -6,67 +7,64 @@ import interactionPlugin from '@fullcalendar/interaction';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users } from "lucide-react";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 const EventCalendar = () => {
-  // Sample events data
-  const events = [
-    {
-      id: '1',
-      title: 'Tech Symposium 2024',
-      start: '2024-08-15T10:00:00',
-      end: '2024-08-15T17:00:00',
-      backgroundColor: 'hsl(var(--success))',
-      borderColor: 'hsl(var(--success))',
-      extendedProps: {
-        department: 'Computer Science',
-        venue: 'Auditorium A',
-        status: 'approved',
-        registrations: 156
+  const { user, profile } = useAuth();
+  const [events, setEvents] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEvents();
+  }, [user, profile]);
+
+  const fetchEvents = async () => {
+    try {
+      let query = supabase.from('events').select('*');
+      
+      // Only show final approved events for students and non-authenticated users
+      if (!user || profile?.role === 'student') {
+        query = query.eq('status', 'final_approved');
       }
-    },
-    {
-      id: '2',
-      title: 'Cultural Night',
-      start: '2024-08-18T19:00:00',
-      end: '2024-08-18T22:00:00',
-      backgroundColor: 'hsl(var(--primary))',
-      borderColor: 'hsl(var(--primary))',
-      extendedProps: {
-        department: 'Cultural Committee',
-        venue: 'Main Ground',
-        status: 'approved',
-        registrations: 230
+      // Show all relevant events for other roles (handled by RLS policies)
+      
+      const { data, error } = await query.order('start_date', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching events:', error);
+        return;
       }
-    },
-    {
-      id: '3',
-      title: 'Robotics Workshop',
-      start: '2024-08-20T14:00:00',
-      end: '2024-08-20T16:00:00',
-      backgroundColor: 'hsl(var(--warning))',
-      borderColor: 'hsl(var(--warning))',
-      extendedProps: {
-        department: 'Electronics',
-        venue: 'Lab 201',
-        status: 'pending',
-        registrations: 45
-      }
-    },
-    {
-      id: '4',
-      title: 'Startup Pitch Competition',
-      start: '2024-08-22T09:00:00',
-      end: '2024-08-22T15:00:00',
-      backgroundColor: 'hsl(var(--success))',
-      borderColor: 'hsl(var(--success))',
-      extendedProps: {
-        department: 'Entrepreneurship Cell',
-        venue: 'Conference Hall',
-        status: 'approved',
-        registrations: 89
-      }
+      
+      setEvents(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+    } finally {
+      setIsLoading(false);
     }
-  ];
+  };
+
+  const getEventColor = (status: string) => {
+    switch (status) {
+      case 'final_approved': return 'hsl(var(--success))';
+      case 'gs_approved': return 'hsl(var(--primary))';
+      case 'submitted': return 'hsl(var(--warning))';
+      default: return 'hsl(var(--muted))';
+    }
+  };
+
+  const calendarEvents = events.map(event => ({
+    id: event.id,
+    title: event.title,
+    start: event.start_date,
+    end: event.end_date,
+    backgroundColor: getEventColor(event.status),
+    borderColor: getEventColor(event.status),
+    extendedProps: {
+      ...event,
+      registrations: Math.floor(Math.random() * 200) + 50 // Mock data for registrations
+    }
+  }));
 
   const handleEventClick = (eventInfo: any) => {
     console.log('Event clicked:', eventInfo.event);
@@ -86,7 +84,10 @@ const EventCalendar = () => {
             Event Calendar
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            View all upcoming events, check availability, and manage your college calendar in one place.
+            {user ? 
+              `View ${profile?.role === 'student' ? 'approved' : 'all relevant'} events and check availability.` :
+              'View approved events. Sign in for more features.'
+            }
           </p>
         </div>
 
@@ -94,25 +95,31 @@ const EventCalendar = () => {
           <div className="lg:col-span-3">
             <Card className="shadow-lg border-0">
               <CardContent className="p-6">
-                <FullCalendar
-                  plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-                  initialView="dayGridMonth"
-                  headerToolbar={{
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                  }}
-                  events={events}
-                  eventClick={handleEventClick}
-                  select={handleDateSelect}
-                  selectable={true}
-                  selectMirror={true}
-                  dayMaxEvents={true}
-                  weekends={true}
-                  height="600px"
-                  eventDisplay="block"
-                  eventTextColor="white"
-                />
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-96">
+                    <div>Loading events...</div>
+                  </div>
+                ) : (
+                  <FullCalendar
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                    initialView="dayGridMonth"
+                    headerToolbar={{
+                      left: 'prev,next today',
+                      center: 'title',
+                      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    }}
+                    events={calendarEvents}
+                    eventClick={handleEventClick}
+                    select={handleDateSelect}
+                    selectable={user ? true : false}
+                    selectMirror={true}
+                    dayMaxEvents={true}
+                    weekends={true}
+                    height="600px"
+                    eventDisplay="block"
+                    eventTextColor="white"
+                  />
+                )}
               </CardContent>
             </Card>
           </div>
@@ -131,20 +138,20 @@ const EventCalendar = () => {
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-medium text-sm">{event.title}</h4>
                       <Badge 
-                        variant={event.extendedProps.status === 'approved' ? 'default' : 'secondary'}
-                        className={event.extendedProps.status === 'approved' ? 'bg-success text-success-foreground' : 'bg-warning text-warning-foreground'}
+                        variant={event.status === 'final_approved' ? 'default' : 'secondary'}
+                        className={event.status === 'final_approved' ? 'bg-success text-success-foreground' : 'bg-warning text-warning-foreground'}
                       >
-                        {event.extendedProps.status}
+                        {event.status === 'final_approved' ? 'approved' : event.status}
                       </Badge>
                     </div>
                     <div className="space-y-1 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        {event.extendedProps.venue}
+                        {event.venue}
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
-                        {event.extendedProps.registrations} registered
+                        {event.expected_attendees || 'TBA'} expected
                       </div>
                     </div>
                   </div>
@@ -159,20 +166,30 @@ const EventCalendar = () => {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Total Events</span>
-                  <span className="font-semibold">24</span>
+                  <span className="font-semibold">{events.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">This Month</span>
-                  <span className="font-semibold text-primary">8</span>
+                  <span className="font-semibold text-primary">
+                    {events.filter(e => new Date(e.start_date).getMonth() === new Date().getMonth()).length}
+                  </span>
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Pending Approval</span>
-                  <span className="font-semibold text-warning">3</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Total Registrations</span>
-                  <span className="font-semibold text-success">520</span>
-                </div>
+                {profile?.role !== 'student' && (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Pending Approval</span>
+                      <span className="font-semibold text-warning">
+                        {events.filter(e => e.status === 'submitted').length}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Approved</span>
+                      <span className="font-semibold text-success">
+                        {events.filter(e => e.status === 'final_approved').length}
+                      </span>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>

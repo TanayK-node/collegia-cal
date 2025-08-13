@@ -1,0 +1,267 @@
+
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CalendarIcon, Loader2, Save, Send } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+const eventSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  start_date: z.date({ required_error: 'Start date is required' }),
+  end_date: z.date({ required_error: 'End date is required' }),
+  venue: z.string().min(1, 'Venue is required'),
+  department: z.string().optional(),
+  expected_attendees: z.number().optional(),
+  budget: z.number().optional(),
+  resources_needed: z.string().optional(),
+}).refine((data) => data.end_date >= data.start_date, {
+  message: "End date must be after start date",
+  path: ["end_date"],
+});
+
+type EventFormData = z.infer<typeof eventSchema>;
+
+interface EventFormProps {
+  onSuccess: () => void;
+}
+
+const EventForm = ({ onSuccess }: EventFormProps) => {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    reset
+  } = useForm<EventFormData>({
+    resolver: zodResolver(eventSchema)
+  });
+
+  const startDate = watch('start_date');
+  const endDate = watch('end_date');
+
+  const submitEvent = async (data: EventFormData, isDraft: boolean = false) => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const eventData = {
+        ...data,
+        start_date: data.start_date.toISOString(),
+        end_date: data.end_date.toISOString(),
+        created_by: user.id,
+        status: isDraft ? 'draft' : 'submitted'
+      };
+
+      const { error: insertError } = await supabase
+        .from('events')
+        .insert([eventData]);
+
+      if (insertError) throw insertError;
+
+      const message = isDraft ? 'Event saved as draft!' : 'Event submitted for approval!';
+      setSuccess(message);
+      reset();
+      setTimeout(() => {
+        onSuccess();
+      }, 1500);
+
+    } catch (err: any) {
+      setError(err.message || 'Failed to save event');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = (data: EventFormData) => {
+    submitEvent(data, false);
+  };
+
+  const saveDraft = (data: EventFormData) => {
+    submitEvent(data, true);
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="title">Event Title *</Label>
+          <Input
+            id="title"
+            {...register('title')}
+            disabled={isLoading}
+          />
+          {errors.title && (
+            <p className="text-sm text-destructive">{errors.title.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="venue">Venue *</Label>
+          <Input
+            id="venue"
+            {...register('venue')}
+            disabled={isLoading}
+          />
+          {errors.venue && (
+            <p className="text-sm text-destructive">{errors.venue.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label>Start Date *</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-left font-normal"
+                disabled={isLoading}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {startDate ? format(startDate, "PPP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={(date) => date && setValue('start_date', date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          {errors.start_date && (
+            <p className="text-sm text-destructive">{errors.start_date.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label>End Date *</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-left font-normal"
+                disabled={isLoading}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {endDate ? format(endDate, "PPP") : "Pick a date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={(date) => date && setValue('end_date', date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          {errors.end_date && (
+            <p className="text-sm text-destructive">{errors.end_date.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="department">Department</Label>
+          <Input
+            id="department"
+            {...register('department')}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="expected_attendees">Expected Attendees</Label>
+          <Input
+            id="expected_attendees"
+            type="number"
+            {...register('expected_attendees', { valueAsNumber: true })}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="budget">Budget</Label>
+          <Input
+            id="budget"
+            type="number"
+            step="0.01"
+            {...register('budget', { valueAsNumber: true })}
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          {...register('description')}
+          rows={4}
+          disabled={isLoading}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="resources_needed">Resources Needed</Label>
+        <Textarea
+          id="resources_needed"
+          {...register('resources_needed')}
+          rows={3}
+          disabled={isLoading}
+        />
+      </div>
+
+      {error && (
+        <Alert>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex gap-4">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={handleSubmit(saveDraft)}
+          disabled={isLoading}
+        >
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          Save Draft
+        </Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+          Submit for Approval
+        </Button>
+      </div>
+    </form>
+  );
+};
+
+export default EventForm;

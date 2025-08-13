@@ -14,16 +14,146 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      event_approvals: {
+        Row: {
+          approval_type: string
+          approved_at: string | null
+          approver_id: string | null
+          comments: string | null
+          created_at: string | null
+          event_id: string | null
+          id: string
+          status: string
+        }
+        Insert: {
+          approval_type: string
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          status: string
+        }
+        Update: {
+          approval_type?: string
+          approved_at?: string | null
+          approver_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_approvals_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          budget: number | null
+          created_at: string | null
+          created_by: string
+          department: string | null
+          description: string | null
+          end_date: string
+          expected_attendees: number | null
+          id: string
+          resources_needed: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["event_status"] | null
+          title: string
+          updated_at: string | null
+          venue: string
+        }
+        Insert: {
+          budget?: number | null
+          created_at?: string | null
+          created_by: string
+          department?: string | null
+          description?: string | null
+          end_date: string
+          expected_attendees?: number | null
+          id?: string
+          resources_needed?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["event_status"] | null
+          title: string
+          updated_at?: string | null
+          venue: string
+        }
+        Update: {
+          budget?: number | null
+          created_at?: string | null
+          created_by?: string
+          department?: string | null
+          description?: string | null
+          end_date?: string
+          expected_attendees?: number | null
+          id?: string
+          resources_needed?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["event_status"] | null
+          title?: string
+          updated_at?: string | null
+          venue?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          committee_name: string | null
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          committee_name?: string | null
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          committee_name?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
-      [_ in never]: never
+      event_status:
+        | "draft"
+        | "submitted"
+        | "gs_approved"
+        | "final_approved"
+        | "rejected"
+      user_role: "committee" | "general_secretary" | "dean" | "student"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +280,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      event_status: [
+        "draft",
+        "submitted",
+        "gs_approved",
+        "final_approved",
+        "rejected",
+      ],
+      user_role: ["committee", "general_secretary", "dean", "student"],
+    },
   },
 } as const
