@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -27,7 +26,7 @@ interface Event {
 }
 
 interface GSEventApprovalProps {
-  status: string;
+  status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected';
 }
 
 const GSEventApproval = ({ status }: GSEventApprovalProps) => {

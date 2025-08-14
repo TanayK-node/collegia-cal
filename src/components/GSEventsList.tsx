@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +20,7 @@ interface Event {
 }
 
 interface GSEventsListProps {
-  status: string;
+  status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected' | 'all';
 }
 
 const GSEventsList = ({ status }: GSEventsListProps) => {
