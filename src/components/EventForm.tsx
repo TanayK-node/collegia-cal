@@ -19,11 +19,11 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 const eventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  start_date: z.date({ 
-    errorMap: () => ({ message: 'Start date is required' })
+  start_date: z.date().refine((date) => date !== undefined, {
+    message: 'Start date is required'
   }),
-  end_date: z.date({ 
-    errorMap: () => ({ message: 'End date is required' })
+  end_date: z.date().refine((date) => date !== undefined, {
+    message: 'End date is required'
   }),
   venue: z.string().min(1, 'Venue is required'),
   department: z.string().optional(),
