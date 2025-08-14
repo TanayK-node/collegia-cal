@@ -79,7 +79,7 @@ const EventCalendar = () => {
   return (
     <section className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12 animate-fade-in-up">
+        {/*<div className="text-center mb-12 animate-fade-in-up">
           <h2 className="text-3xl font-bold text-foreground mb-4">
             Event Calendar
           </h2>
@@ -89,7 +89,7 @@ const EventCalendar = () => {
               'View approved events. Sign in for more features.'
             }
           </p>
-        </div>
+        </div>*/}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3">

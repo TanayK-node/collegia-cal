@@ -55,9 +55,9 @@ const Index = () => {
         </div>
       )}
       
-      <HeroSection />
+     
       <EventCalendar />
-      <FeaturesSection />
+    
       <Footer />
     </div>
   );
