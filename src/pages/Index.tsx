@@ -8,12 +8,30 @@ import FeaturesSection from "@/components/FeaturesSection";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
+  const [forceLoaded, setForceLoaded] = useState(false);
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  // Fallback to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setForceLoaded(true);
+    }, 3000); // Force load after 3 seconds
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  if (loading && !forceLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   // Redirect committee users to their dashboard

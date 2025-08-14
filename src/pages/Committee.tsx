@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,9 +12,26 @@ import { LogOut, Plus } from 'lucide-react';
 const Committee = () => {
   const { user, profile, signOut, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('calendar');
+  const [forceLoaded, setForceLoaded] = useState(false);
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  // Fallback to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setForceLoaded(true);
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  if (loading && !forceLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user || !profile) {
