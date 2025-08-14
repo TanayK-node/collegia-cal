@@ -8,6 +8,8 @@ import { useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Committee from "./pages/Committee";
+import GeneralSecretary from "./pages/GeneralSecretary";
+import Dean from "./pages/Dean";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +24,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/committee" element={<Committee />} />
+          <Route path="/general-secretary" element={<GeneralSecretary />} />
+          <Route path="/dean" element={<Dean />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
