@@ -19,8 +19,12 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 const eventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
-  start_date: z.date({ required_error: 'Start date is required' }),
-  end_date: z.date({ required_error: 'End date is required' }),
+  start_date: z.date({ 
+    errorMap: () => ({ message: 'Start date is required' })
+  }),
+  end_date: z.date({ 
+    errorMap: () => ({ message: 'End date is required' })
+  }),
   venue: z.string().min(1, 'Venue is required'),
   department: z.string().optional(),
   expected_attendees: z.number().optional(),
@@ -70,12 +74,12 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
         start_date: data.start_date.toISOString(),
         end_date: data.end_date.toISOString(),
         created_by: user.id,
-        status: isDraft ? 'draft' : 'submitted'
+        status: (isDraft ? 'draft' : 'submitted') as 'draft' | 'submitted'
       };
 
       const { error: insertError } = await supabase
         .from('events')
-        .insert([eventData]);
+        .insert(eventData);
 
       if (insertError) throw insertError;
 
