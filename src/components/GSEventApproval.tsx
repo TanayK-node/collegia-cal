@@ -83,16 +83,23 @@ const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
           comments: comments[eventId] || null
         });
 
+        
+
       if (approvalError) throw approvalError;
 
       // Update event status
       const newStatus = approvalStatus === 'approved' ? 'gs_approved' : 'rejected';
-      const { error: updateError } = await supabase
+      const { data, error } = await supabase
         .from('events')
         .update({ status: newStatus })
-        .eq('id', eventId);
+        .eq('id', eventId)
+        .select();
+        console.log('Event ID sent to update:', JSON.stringify(eventId));
+        const check = await supabase.from('events').select('*').eq('id', eventId);
+        console.log('Rows found for this ID:', check.data);
+      console.log('Updated:', data, error);
+      if (error) throw error;
 
-      if (updateError) throw updateError;
 
       setSuccess(`Event ${approvalStatus === 'approved' ? 'approved' : 'rejected'} successfully!`);
       
