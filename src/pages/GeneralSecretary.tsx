@@ -12,7 +12,6 @@ import GSEventsList from '@/components/GSEventsList';
 const GeneralSecretary = () => {
   const { user, profile, signOut, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('pending');
-  const [refreshKey, setRefreshKey] = useState(0);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">Loading...</div>;
@@ -28,17 +27,6 @@ const GeneralSecretary = () => {
 
   const handleSignOut = async () => {
     await signOut();
-  };
-
-  const handleEventApproved = () => {
-    // Force refresh of all tabs when an event is approved
-    setRefreshKey(prev => prev + 1);
-  };
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    // Force refresh when changing tabs
-    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -59,7 +47,7 @@ const GeneralSecretary = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        <Tabs value={activeTab} onValueChange={handleTabChange}>
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="pending" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
@@ -87,7 +75,7 @@ const GeneralSecretary = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <GSEventApproval status="submitted" onEventApproved={handleEventApproved} key={`pending-${refreshKey}`} />
+                <GSEventApproval status="submitted" />
               </CardContent>
             </Card>
           </TabsContent>
@@ -104,7 +92,7 @@ const GeneralSecretary = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <GSEventsList status="gs_approved" key={`approved-${refreshKey}`} />
+                <GSEventsList status="gs_approved" />
               </CardContent>
             </Card>
           </TabsContent>
@@ -118,7 +106,7 @@ const GeneralSecretary = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <GSEventsList status="all" key={`all-${refreshKey}`} />
+                <GSEventsList status="all" />
               </CardContent>
             </Card>
           </TabsContent>

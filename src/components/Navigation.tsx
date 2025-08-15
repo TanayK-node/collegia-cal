@@ -3,8 +3,7 @@ import { Calendar, Users, Settings, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+
 const Navigation = () => {
   const { user, profile } = useAuth();
 
@@ -83,17 +82,11 @@ const Navigation = () => {
                 </Button>
               </>
             ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  window.location.href = "/auth"; // Force redirect to auth page
-                }}
-              >
-                Logout
+              <Button asChild variant="outline" size="sm">
+                <Link to={getDashboardLink()}>
+                  {getDashboardLabel()} Dashboard
+                </Link>
               </Button>
-
             )}
             <Button variant="ghost" size="sm">
               <Settings className="h-4 w-4" />

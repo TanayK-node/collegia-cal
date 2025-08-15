@@ -28,10 +28,9 @@ interface Event {
 
 interface GSEventApprovalProps {
   status: 'submitted';
-  onEventApproved?: () => void;
 }
 
-const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
+const GSEventApproval = ({ status }: GSEventApprovalProps) => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +45,6 @@ const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
 
   const fetchEvents = async () => {
     try {
-      setIsLoading(true);
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -71,19 +69,7 @@ const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
     setSuccess(null);
 
     try {
-      // Determine new event status
-      const newEventStatus = approvalStatus === 'approved' ? 'gs_approved' : 'rejected';
-
-      // Start a transaction-like approach
-      // First, update the event status
-      const { error: updateError } = await supabase
-        .from('events')
-        .update({ status: newEventStatus })
-        .eq('id', eventId);
-
-      if (updateError) throw updateError;
-
-      // Then create the approval record
+      // Create approval record
       const { error: approvalError } = await supabase
         .from('event_approvals')
         .insert({
@@ -94,21 +80,21 @@ const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
           comments: comments[eventId] || null
         });
 
-      if (approvalError) {
-        // If approval record creation fails, we should rollback the event status
-        console.error('Failed to create approval record:', approvalError);
-        // Attempt rollback
-        await supabase
-          .from('events')
-          .update({ status: 'submitted' })
-          .eq('id', eventId);
-        throw approvalError;
-      }
+      if (approvalError) throw approvalError;
+
+      // Update event status
+      const newStatus = approvalStatus === 'approved' ? 'gs_approved' : 'rejected';
+      const { error: updateError } = await supabase
+        .from('events')
+        .update({ status: newStatus })
+        .eq('id', eventId);
+
+      if (updateError) throw updateError;
 
       setSuccess(`Event ${approvalStatus === 'approved' ? 'approved' : 'rejected'} successfully!`);
       
-      // Remove the event from the current list immediately
-      setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
+      // Remove the event from the list
+      setEvents(events.filter(event => event.id !== eventId));
       
       // Clear the comment for this event
       setComments(prev => {
@@ -117,13 +103,7 @@ const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
         return newComments;
       });
 
-      // Call the callback to refresh parent component and other tabs
-      if (onEventApproved) {
-        onEventApproved();
-      }
-
     } catch (err: any) {
-      console.error('Error during approval process:', err);
       setError(err.message || `Failed to ${approvalStatus === 'approved' ? 'approve' : 'reject'} event`);
     } finally {
       setProcessingEvent(null);
@@ -213,6 +193,13 @@ const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
               )}
             </div>
 
+            {event.resources_needed && (
+              <div>
+                <Label className="text-sm font-medium">Resources Needed:</Label>
+                <p className="text-sm text-muted-foreground mt-1">{event.resources_needed}</p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor={`comment-${event.id}`} className="flex items-center gap-1">
                 <MessageSquare className="h-4 w-4" />
@@ -235,7 +222,7 @@ const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
                 className="bg-success hover:bg-success/90 text-success-foreground"
               >
                 <Check className="mr-2 h-4 w-4" />
-                {processingEvent === event.id ? 'Processing...' : 'Approve'}
+                Approve
               </Button>
               <Button
                 variant="destructive"
@@ -243,7 +230,7 @@ const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
                 disabled={processingEvent === event.id}
               >
                 <X className="mr-2 h-4 w-4" />
-                {processingEvent === event.id ? 'Processing...' : 'Reject'}
+                Reject
               </Button>
             </div>
           </CardContent>

@@ -35,7 +35,6 @@ const GSEventsList = ({ status }: GSEventsListProps) => {
 
   const fetchEvents = async () => {
     try {
-      setIsLoading(true);
       let query = supabase.from('events').select('*');
       
       if (status !== 'all') {
@@ -47,7 +46,6 @@ const GSEventsList = ({ status }: GSEventsListProps) => {
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) throw error;
-      console.log(`Fetched ${data?.length || 0} events for status: ${status}`);
       setEvents(data || []);
     } catch (err: any) {
       console.error('Error fetching events:', err);
