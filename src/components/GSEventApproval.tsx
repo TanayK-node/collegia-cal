@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,9 +27,10 @@ interface Event {
 
 interface GSEventApprovalProps {
   status: 'submitted';
+  onEventApproved?: () => void;
 }
 
-const GSEventApproval = ({ status }: GSEventApprovalProps) => {
+const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,6 +102,11 @@ const GSEventApproval = ({ status }: GSEventApprovalProps) => {
         delete newComments[eventId];
         return newComments;
       });
+
+      // Call the callback to refresh parent component
+      if (onEventApproved) {
+        onEventApproved();
+      }
 
     } catch (err: any) {
       setError(err.message || `Failed to ${approvalStatus === 'approved' ? 'approve' : 'reject'} event`);
