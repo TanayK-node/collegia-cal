@@ -3,10 +3,12 @@ import { Calendar, Users, Settings, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 const Navigation = () => {
   const { user, profile } = useAuth();
-
+  const { signOut } = useAuth();
+const navigate = useNavigate();
   const getDashboardLink = () => {
     if (!user || !profile) return "/auth";
     
@@ -82,11 +84,17 @@ const Navigation = () => {
                 </Button>
               </>
             ) : (
-              <Button asChild variant="outline" size="sm">
-                <Link to={getDashboardLink()}>
-                  {getDashboardLabel()} Dashboard
-                </Link>
-              </Button>
+             <Button
+              variant="outline"
+              size="sm"
+              onClick={async () => {
+                await signOut();
+                navigate("/auth"); // using react-router's navigate
+              }}
+            >
+              Logout
+            </Button>
+
             )}
             <Button variant="ghost" size="sm">
               <Settings className="h-4 w-4" />
