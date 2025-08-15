@@ -24,13 +24,15 @@ interface Event {
   budget: number | null;
   is_private: boolean | null;
   created_at: string;
+  resources_needed?: string | null;
 }
 
 interface GSEventApprovalProps {
   status: 'submitted';
+  onEventApproved?: () => void;
 }
 
-const GSEventApproval = ({ status }: GSEventApprovalProps) => {
+const GSEventApproval = ({ status, onEventApproved }: GSEventApprovalProps) => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,6 +47,7 @@ const GSEventApproval = ({ status }: GSEventApprovalProps) => {
 
   const fetchEvents = async () => {
     try {
+      setIsLoading(true);
       const { data, error } = await supabase
         .from('events')
         .select('*')
@@ -93,8 +96,8 @@ const GSEventApproval = ({ status }: GSEventApprovalProps) => {
 
       setSuccess(`Event ${approvalStatus === 'approved' ? 'approved' : 'rejected'} successfully!`);
       
-      // Remove the event from the list
-      setEvents(events.filter(event => event.id !== eventId));
+      // Immediately remove the event from the current list
+      setEvents(prevEvents => prevEvents.filter(event => event.id !== eventId));
       
       // Clear the comment for this event
       setComments(prev => {
@@ -102,6 +105,14 @@ const GSEventApproval = ({ status }: GSEventApprovalProps) => {
         delete newComments[eventId];
         return newComments;
       });
+
+      // Notify parent component to refresh other tabs
+      if (onEventApproved) {
+        onEventApproved();
+      }
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(null), 3000);
 
     } catch (err: any) {
       setError(err.message || `Failed to ${approvalStatus === 'approved' ? 'approve' : 'reject'} event`);

@@ -24,6 +24,7 @@ interface Event {
   budget: number | null;
   is_private: boolean | null;
   created_at: string;
+  resources_needed?: string | null;
 }
 
 interface DeanEventApprovalProps {

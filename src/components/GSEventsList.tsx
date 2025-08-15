@@ -19,22 +19,25 @@ interface Event {
   budget: number | null;
   is_private: boolean | null;
   created_at: string;
+  resources_needed?: string | null;
 }
 
 interface GSEventsListProps {
   status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected' | 'all';
+  refreshKey?: number;
 }
 
-const GSEventsList = ({ status }: GSEventsListProps) => {
+const GSEventsList = ({ status, refreshKey }: GSEventsListProps) => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchEvents();
-  }, [status]);
+  }, [status, refreshKey]);
 
   const fetchEvents = async () => {
     try {
+      setIsLoading(true);
       let query = supabase.from('events').select('*');
       
       if (status !== 'all') {
