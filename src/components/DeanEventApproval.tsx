@@ -91,7 +91,7 @@ const DeanEventApproval = ({ status }: DeanEventApprovalProps) => {
 
       if (updateError) throw updateError;
 
-      setSuccess(`Event ${approvalStatus === 'approved' ? 'given final approval' : 'rejected'} successfully!`);
+      setSuccess(`Event ${approvalStatus === 'approved' ? 'approved' : 'rejected'} successfully!`);
       
       // Remove the event from the list
       setEvents(events.filter(event => event.id !== eventId));
@@ -140,7 +140,7 @@ const DeanEventApproval = ({ status }: DeanEventApprovalProps) => {
       {success && (
         <Alert>
           <AlertDescription>{success}</AlertDescription>
-        </Alert>
+      </Alert>
       )}
 
       {events.map((event) => (
@@ -167,7 +167,7 @@ const DeanEventApproval = ({ status }: DeanEventApprovalProps) => {
                   </div>
                 </div>
               </div>
-              <Badge className="bg-primary text-primary-foreground">GS Approved</Badge>
+              <Badge className="bg-primary text-primary-foreground">Pending Final Approval</Badge>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -193,21 +193,14 @@ const DeanEventApproval = ({ status }: DeanEventApprovalProps) => {
               )}
             </div>
 
-            {event.resources_needed && (
-              <div>
-                <Label className="text-sm font-medium">Resources Needed:</Label>
-                <p className="text-sm text-muted-foreground mt-1">{event.resources_needed}</p>
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor={`comment-${event.id}`} className="flex items-center gap-1">
                 <MessageSquare className="h-4 w-4" />
-                Dean Comments (Optional)
+                Final Comments (Optional)
               </Label>
               <Textarea
                 id={`comment-${event.id}`}
-                placeholder="Add any final comments or conditions..."
+                placeholder="Add any final comments or feedback..."
                 value={comments[event.id] || ''}
                 onChange={(e) => updateComment(event.id, e.target.value)}
                 disabled={processingEvent === event.id}
@@ -222,7 +215,7 @@ const DeanEventApproval = ({ status }: DeanEventApprovalProps) => {
                 className="bg-success hover:bg-success/90 text-success-foreground"
               >
                 <Check className="mr-2 h-4 w-4" />
-                Final Approval
+                Final Approve
               </Button>
               <Button
                 variant="destructive"

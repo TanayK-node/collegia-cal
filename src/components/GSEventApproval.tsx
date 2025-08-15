@@ -193,13 +193,6 @@ const GSEventApproval = ({ status }: GSEventApprovalProps) => {
               )}
             </div>
 
-            {event.resources_needed && (
-              <div>
-                <Label className="text-sm font-medium">Resources Needed:</Label>
-                <p className="text-sm text-muted-foreground mt-1">{event.resources_needed}</p>
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor={`comment-${event.id}`} className="flex items-center gap-1">
                 <MessageSquare className="h-4 w-4" />
