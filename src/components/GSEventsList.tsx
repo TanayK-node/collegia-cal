@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ interface Event {
   department: string | null;
   expected_attendees: number | null;
   budget: number | null;
+  is_private: boolean | null;
   created_at: string;
 }
 
@@ -86,7 +88,14 @@ const GSEventsList = ({ status }: GSEventsListProps) => {
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle className="text-lg">{event.title}</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {event.title}
+                  {event.is_private && (
+                    <Badge variant="secondary" className="text-xs">
+                      Private
+                    </Badge>
+                  )}
+                </CardTitle>
                 <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />

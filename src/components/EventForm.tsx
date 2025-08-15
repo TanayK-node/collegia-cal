@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CalendarIcon, Loader2, Save, Send } from 'lucide-react';
@@ -30,6 +31,7 @@ const eventSchema = z.object({
   expected_attendees: z.number().optional(),
   budget: z.number().optional(),
   resources_needed: z.string().optional(),
+  is_private: z.boolean().optional(),
 }).refine((data) => data.end_date >= data.start_date, {
   message: "End date must be after start date",
   path: ["end_date"],
@@ -55,11 +57,15 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
     watch,
     reset
   } = useForm<EventFormData>({
-    resolver: zodResolver(eventSchema)
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
+      is_private: false
+    }
   });
 
   const startDate = watch('start_date');
   const endDate = watch('end_date');
+  const isPrivate = watch('is_private');
 
   const submitEvent = async (data: EventFormData, isDraft: boolean = false) => {
     if (!user) return;
@@ -74,7 +80,8 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
         start_date: data.start_date.toISOString(),
         end_date: data.end_date.toISOString(),
         created_by: user.id,
-        status: (isDraft ? 'draft' : 'submitted') as 'draft' | 'submitted'
+        status: (isDraft ? 'draft' : 'submitted') as 'draft' | 'submitted',
+        is_private: data.is_private || false
       };
 
       const { error: insertError } = await supabase
@@ -214,6 +221,18 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
             {...register('budget', { valueAsNumber: true })}
             disabled={isLoading}
           />
+        </div>
+
+        <div className="space-y-2 flex items-center space-x-2">
+          <Checkbox
+            id="is_private"
+            checked={isPrivate}
+            onCheckedChange={(checked) => setValue('is_private', checked as boolean)}
+            disabled={isLoading}
+          />
+          <Label htmlFor="is_private" className="text-sm font-medium">
+            Private Event (Only visible to your committee)
+          </Label>
         </div>
       </div>
 

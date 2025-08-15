@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -65,6 +65,7 @@ export type Database = {
           end_date: string
           expected_attendees: number | null
           id: string
+          is_private: boolean | null
           resources_needed: string | null
           start_date: string
           status: Database["public"]["Enums"]["event_status"] | null
@@ -81,6 +82,7 @@ export type Database = {
           end_date: string
           expected_attendees?: number | null
           id?: string
+          is_private?: boolean | null
           resources_needed?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["event_status"] | null
@@ -97,6 +99,7 @@ export type Database = {
           end_date?: string
           expected_attendees?: number | null
           id?: string
+          is_private?: boolean | null
           resources_needed?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["event_status"] | null
@@ -113,7 +116,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
-          role: Database["public"]["Enums"]["user_role"]
+          role: Database["public"]["Enums"]["user_role"] | null
           updated_at: string | null
         }
         Insert: {
@@ -122,7 +125,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
-          role?: Database["public"]["Enums"]["user_role"]
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
         }
         Update: {
@@ -131,7 +134,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
-          role?: Database["public"]["Enums"]["user_role"]
+          role?: Database["public"]["Enums"]["user_role"] | null
           updated_at?: string | null
         }
         Relationships: []

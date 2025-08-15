@@ -1,14 +1,15 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CheckCircle, XCircle, Calendar, MapPin, Users, DollarSign } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Calendar, MapPin, Users, DollarSign, Check, X, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Event {
   id: string;
@@ -21,21 +22,22 @@ interface Event {
   department: string | null;
   expected_attendees: number | null;
   budget: number | null;
-  resources_needed: string | null;
+  is_private: boolean | null;
   created_at: string;
 }
 
 interface GSEventApprovalProps {
-  status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected';
+  status: 'submitted';
 }
 
 const GSEventApproval = ({ status }: GSEventApprovalProps) => {
   const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
-  const [comments, setComments] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [processingEvent, setProcessingEvent] = useState<string | null>(null);
+  const [comments, setComments] = useState<{ [key: string]: string }>({});
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -52,15 +54,19 @@ const GSEventApproval = ({ status }: GSEventApprovalProps) => {
       if (error) throw error;
       setEvents(data || []);
     } catch (err: any) {
-      setError(err.message);
+      console.error('Error fetching events:', err);
+      setError('Failed to load events');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleApproval = async (eventId: string, action: 'approve' | 'reject') => {
+  const handleApproval = async (eventId: string, approvalStatus: 'approved' | 'rejected') => {
     if (!user) return;
-    
-    setIsLoading(true);
+
+    setProcessingEvent(eventId);
     setError(null);
+    setSuccess(null);
 
     try {
       // Create approval record
@@ -69,15 +75,15 @@ const GSEventApproval = ({ status }: GSEventApprovalProps) => {
         .insert({
           event_id: eventId,
           approver_id: user.id,
+          status: approvalStatus,
           approval_type: 'gs_approval',
-          status: action === 'approve' ? 'approved' : 'rejected',
-          comments: comments || null
+          comments: comments[eventId] || null
         });
 
       if (approvalError) throw approvalError;
 
       // Update event status
-      const newStatus = action === 'approve' ? 'gs_approved' : 'rejected';
+      const newStatus = approvalStatus === 'approved' ? 'gs_approved' : 'rejected';
       const { error: updateError } = await supabase
         .from('events')
         .update({ status: newStatus })
@@ -85,127 +91,151 @@ const GSEventApproval = ({ status }: GSEventApprovalProps) => {
 
       if (updateError) throw updateError;
 
-      setComments('');
-      setSelectedEvent(null);
-      fetchEvents();
+      setSuccess(`Event ${approvalStatus === 'approved' ? 'approved' : 'rejected'} successfully!`);
+      
+      // Remove the event from the list
+      setEvents(events.filter(event => event.id !== eventId));
+      
+      // Clear the comment for this event
+      setComments(prev => {
+        const newComments = { ...prev };
+        delete newComments[eventId];
+        return newComments;
+      });
 
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message || `Failed to ${approvalStatus === 'approved' ? 'approve' : 'reject'} event`);
     } finally {
-      setIsLoading(false);
+      setProcessingEvent(null);
     }
   };
+
+  const updateComment = (eventId: string, comment: string) => {
+    setComments(prev => ({
+      ...prev,
+      [eventId]: comment
+    }));
+  };
+
+  if (isLoading) {
+    return <div className="text-center py-4">Loading events...</div>;
+  }
 
   if (events.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground">
-        No events pending approval at the moment.
+        No events pending approval.
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {error && (
-        <Alert>
+        <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
 
-      <div className="grid gap-4">
-        {events.map((event) => (
-          <Card key={event.id} className="border-l-4 border-l-warning">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg">{event.title}</CardTitle>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {format(new Date(event.start_date), 'MMM dd, yyyy')}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {event.venue}
-                    </div>
+      {success && (
+        <Alert>
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
+      )}
+
+      {events.map((event) => (
+        <Card key={event.id} className="border-l-4 border-l-warning">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  {event.title}
+                  {event.is_private && (
+                    <Badge variant="secondary" className="text-xs">
+                      Private
+                    </Badge>
+                  )}
+                </CardTitle>
+                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    {format(new Date(event.start_date), 'MMM dd, yyyy')} - {format(new Date(event.end_date), 'MMM dd, yyyy')}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    {event.venue}
                   </div>
                 </div>
-                <Badge variant="secondary">Pending Review</Badge>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {event.description && (
-                <p className="text-sm">{event.description}</p>
+              <Badge className="bg-warning text-warning-foreground">Pending Approval</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {event.description && (
+              <p className="text-sm text-muted-foreground">{event.description}</p>
+            )}
+            
+            <div className="flex gap-4 text-sm">
+              {event.department && (
+                <span className="text-muted-foreground">Dept: {event.department}</span>
               )}
-              
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                {event.department && (
-                  <div>
-                    <Label className="font-medium">Department</Label>
-                    <p className="text-muted-foreground">{event.department}</p>
-                  </div>
-                )}
-                {event.expected_attendees && (
-                  <div className="flex items-center gap-1">
-                    <Users className="h-4 w-4" />
-                    <span>{event.expected_attendees} attendees</span>
-                  </div>
-                )}
-                {event.budget && (
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-4 w-4" />
-                    <span>${event.budget}</span>
-                  </div>
-                )}
-              </div>
-
-              {event.resources_needed && (
-                <div>
-                  <Label className="font-medium">Resources Needed</Label>
-                  <p className="text-sm text-muted-foreground">{event.resources_needed}</p>
+              {event.expected_attendees && (
+                <div className="flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  <span>{event.expected_attendees}</span>
                 </div>
               )}
+              {event.budget && (
+                <div className="flex items-center gap-1">
+                  <DollarSign className="h-4 w-4" />
+                  <span>${event.budget}</span>
+                </div>
+              )}
+            </div>
 
-              <div className="space-y-3 pt-4 border-t">
-                <div>
-                  <Label htmlFor={`comments-${event.id}`}>Comments (Optional)</Label>
-                  <Textarea
-                    id={`comments-${event.id}`}
-                    placeholder="Add any comments or feedback..."
-                    value={selectedEvent?.id === event.id ? comments : ''}
-                    onChange={(e) => {
-                      setSelectedEvent(event);
-                      setComments(e.target.value);
-                    }}
-                    rows={3}
-                  />
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => handleApproval(event.id, 'approve')}
-                    disabled={isLoading}
-                    className="bg-success hover:bg-success/90"
-                  >
-                    <CheckCircle className="mr-1 h-4 w-4" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleApproval(event.id, 'reject')}
-                    disabled={isLoading}
-                  >
-                    <XCircle className="mr-1 h-4 w-4" />
-                    Reject
-                  </Button>
-                </div>
+            {event.resources_needed && (
+              <div>
+                <Label className="text-sm font-medium">Resources Needed:</Label>
+                <p className="text-sm text-muted-foreground mt-1">{event.resources_needed}</p>
               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor={`comment-${event.id}`} className="flex items-center gap-1">
+                <MessageSquare className="h-4 w-4" />
+                Comments (Optional)
+              </Label>
+              <Textarea
+                id={`comment-${event.id}`}
+                placeholder="Add any comments or feedback..."
+                value={comments[event.id] || ''}
+                onChange={(e) => updateComment(event.id, e.target.value)}
+                disabled={processingEvent === event.id}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={() => handleApproval(event.id, 'approved')}
+                disabled={processingEvent === event.id}
+                className="bg-success hover:bg-success/90 text-success-foreground"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Approve
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => handleApproval(event.id, 'rejected')}
+                disabled={processingEvent === event.id}
+              >
+                <X className="mr-2 h-4 w-4" />
+                Reject
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

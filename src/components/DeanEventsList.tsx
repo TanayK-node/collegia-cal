@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, MapPin, Users, DollarSign, Award } from 'lucide-react';
+import { Calendar, MapPin, Users, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Event {
@@ -16,11 +17,12 @@ interface Event {
   department: string | null;
   expected_attendees: number | null;
   budget: number | null;
+  is_private: boolean | null;
   created_at: string;
 }
 
 interface DeanEventsListProps {
-  status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected' | 'all';
+  status: 'gs_approved' | 'final_approved' | 'rejected' | 'all';
 }
 
 const DeanEventsList = ({ status }: DeanEventsListProps) => {
@@ -55,12 +57,9 @@ const DeanEventsList = ({ status }: DeanEventsListProps) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'gs_approved':
-        return <Badge className="bg-primary text-primary-foreground">Pending Final Approval</Badge>;
+        return <Badge className="bg-primary text-primary-foreground">Pending Dean</Badge>;
       case 'final_approved':
-        return <Badge className="bg-success text-success-foreground">
-          <Award className="mr-1 h-3 w-3" />
-          Finalized
-        </Badge>;
+        return <Badge className="bg-success text-success-foreground">Final Approved</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
       default:
@@ -83,13 +82,17 @@ const DeanEventsList = ({ status }: DeanEventsListProps) => {
   return (
     <div className="grid gap-4">
       {events.map((event) => (
-        <Card key={event.id} className={event.status === 'final_approved' ? 'border-l-4 border-l-success' : ''}>
+        <Card key={event.id}>
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  {event.status === 'final_approved' && <Award className="h-5 w-5 text-success" />}
                   {event.title}
+                  {event.is_private && (
+                    <Badge variant="secondary" className="text-xs">
+                      Private
+                    </Badge>
+                  )}
                 </CardTitle>
                 <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
