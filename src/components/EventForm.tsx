@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CalendarIcon, Loader2, Save, Send } from 'lucide-react';
+import { CalendarIcon, Loader2, Save, Send, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -23,18 +23,25 @@ const eventSchema = z.object({
   start_date: z.date().refine((date) => date !== undefined, {
     message: 'Start date is required'
   }),
+  start_time: z.string().min(1, 'Start time is required'),
   end_date: z.date().refine((date) => date !== undefined, {
     message: 'End date is required'
   }),
+  end_time: z.string().min(1, 'End time is required'),
   venue: z.string().min(1, 'Venue is required'),
   department: z.string().optional(),
   expected_attendees: z.number().optional(),
   budget: z.number().optional(),
   resources_needed: z.string().optional(),
   is_private: z.boolean().optional(),
-}).refine((data) => data.end_date >= data.start_date, {
-  message: "End date must be after start date",
-  path: ["end_date"],
+}).refine((data) => {
+  // Combine date and time for comparison
+  const startDateTime = new Date(`${data.start_date.toISOString().split('T')[0]}T${data.start_time}`);
+  const endDateTime = new Date(`${data.end_date.toISOString().split('T')[0]}T${data.end_time}`);
+  return endDateTime > startDateTime;
+}, {
+  message: "End date and time must be after start date and time",
+  path: ["end_time"],
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -65,6 +72,8 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
 
   const startDate = watch('start_date');
   const endDate = watch('end_date');
+  const startTime = watch('start_time');
+  const endTime = watch('end_time');
   const isPrivate = watch('is_private');
 
   const submitEvent = async (data: EventFormData, isDraft: boolean = false) => {
@@ -75,10 +84,20 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
     setSuccess(null);
 
     try {
+      // Combine date and time for proper ISO string
+      const startDateTime = new Date(`${data.start_date.toISOString().split('T')[0]}T${data.start_time}`);
+      const endDateTime = new Date(`${data.end_date.toISOString().split('T')[0]}T${data.end_time}`);
+      
       const eventData = {
-        ...data,
-        start_date: data.start_date.toISOString(),
-        end_date: data.end_date.toISOString(),
+        title: data.title,
+        description: data.description,
+        venue: data.venue,
+        department: data.department,
+        expected_attendees: data.expected_attendees,
+        budget: data.budget,
+        resources_needed: data.resources_needed,
+        start_date: startDateTime.toISOString(),
+        end_date: endDateTime.toISOString(),
         created_by: user.id,
         status: (isDraft ? 'draft' : 'submitted') as 'draft' | 'submitted',
         is_private: data.is_private || false
@@ -167,6 +186,23 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="start_time">Start Time *</Label>
+          <div className="relative">
+            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="start_time"
+              type="time"
+              className="pl-10"
+              {...register('start_time')}
+              disabled={isLoading}
+            />
+          </div>
+          {errors.start_time && (
+            <p className="text-sm text-destructive">{errors.start_time.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
           <Label>End Date *</Label>
           <Popover>
             <PopoverTrigger asChild>
@@ -190,6 +226,23 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
           </Popover>
           {errors.end_date && (
             <p className="text-sm text-destructive">{errors.end_date.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="end_time">End Time *</Label>
+          <div className="relative">
+            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              id="end_time"
+              type="time"
+              className="pl-10"
+              {...register('end_time')}
+              disabled={isLoading}
+            />
+          </div>
+          {errors.end_time && (
+            <p className="text-sm text-destructive">{errors.end_time.message}</p>
           )}
         </div>
 
