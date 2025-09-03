@@ -1,11 +1,11 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogOut, FileText, Clock, CheckCircle, Award, AlertTriangle } from 'lucide-react';
+import { LogOut, FileText, Clock, CheckCircle, Award, AlertTriangle, Calendar } from 'lucide-react';
 import DeanEventApproval from '@/components/DeanEventApproval';
 import DeanEventsList from '@/components/DeanEventsList';
 
@@ -39,10 +39,18 @@ const Dean = () => {
               Welcome, {profile.full_name} - Final Event Authorization
             </p>
           </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/">
+                <Calendar className="mr-2 h-4 w-4" />
+                Back to Calendar
+              </Link>
+            </Button>
+            <Button variant="outline" onClick={handleSignOut}>
+              <LogOut className="mr-2 h-4 w-4" />
+              Sign Out
+            </Button>
+          </div>
         </div>
       </header>
 
