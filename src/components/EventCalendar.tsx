@@ -9,11 +9,14 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Users } from "lucide-react";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { EventDetailsModal } from './EventDetailsModal';
 
 const EventCalendar = () => {
   const { user, profile } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchEvents();
@@ -29,14 +32,37 @@ const EventCalendar = () => {
       }
       // Show all relevant events for other roles (handled by RLS policies)
       
-      const { data, error } = await query.order('start_date', { ascending: true });
+      const { data: eventsData, error } = await query.order('start_date', { ascending: true });
       
       if (error) {
         console.error('Error fetching events:', error);
         return;
       }
       
-      setEvents(data || []);
+      // Fetch committee names for the events
+      if (eventsData && eventsData.length > 0) {
+        const creatorIds = [...new Set(eventsData.map(event => event.created_by))];
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, committee_name')
+          .in('id', creatorIds);
+        
+        // Create a map of user id to committee name
+        const committeMap = new Map();
+        profilesData?.forEach(profile => {
+          committeMap.set(profile.id, profile.committee_name);
+        });
+        
+        // Transform data to include committee_name at the top level
+        const transformedData = eventsData.map(event => ({
+          ...event,
+          committee_name: committeMap.get(event.created_by) || 'Unknown Committee'
+        }));
+        
+        setEvents(transformedData);
+      } else {
+        setEvents([]);
+      }
     } catch (error) {
       console.error('Error:', error);
     } finally {
@@ -67,13 +93,22 @@ const EventCalendar = () => {
   }));
 
   const handleEventClick = (eventInfo: any) => {
-    console.log('Event clicked:', eventInfo.event);
-    // Here you would typically open a modal with event details
+    const eventId = eventInfo.event.id;
+    const event = events.find(e => e.id === eventId);
+    if (event) {
+      setSelectedEvent(event);
+      setIsModalOpen(true);
+    }
   };
 
   const handleDateSelect = (selectInfo: any) => {
     console.log('Date selected:', selectInfo);
     // Here you would typically open the event creation form
+  };
+
+  const openEventModal = (event: any) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
   };
 
   return (
@@ -134,7 +169,11 @@ const EventCalendar = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 {events.slice(0, 3).map((event) => (
-                  <div key={event.id} className="p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer">
+                  <div 
+                    key={event.id} 
+                    className="p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors cursor-pointer"
+                    onClick={() => openEventModal(event)}
+                  >
                     <div className="flex items-start justify-between mb-2">
                       <h4 className="font-medium text-sm">{event.title}</h4>
                       <Badge 
@@ -195,6 +234,12 @@ const EventCalendar = () => {
           </div>
         </div>
       </div>
+
+      <EventDetailsModal 
+        event={selectedEvent}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </section>
   );
 };
