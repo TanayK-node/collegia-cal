@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import EventForm from '@/components/EventForm';
 import CommitteeCalendar from '@/components/CommitteeCalendar';
+import EventRegistrationTracker from '@/components/EventRegistrationTracker';
 import { Button } from '@/components/ui/button';
 import { LogOut, Plus } from 'lucide-react';
 
@@ -69,6 +70,7 @@ const Committee = () => {
             <TabsList>
               <TabsTrigger value="calendar">My Events</TabsTrigger>
               <TabsTrigger value="create">Create Event</TabsTrigger>
+              <TabsTrigger value="registrations">Registration Tracking</TabsTrigger>
             </TabsList>
             <Button onClick={() => setActiveTab('create')}>
               <Plus className="mr-2 h-4 w-4" />
@@ -102,6 +104,10 @@ const Committee = () => {
                 <EventForm onSuccess={() => setActiveTab('calendar')} />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="registrations" className="space-y-6">
+            <EventRegistrationTracker />
           </TabsContent>
         </Tabs>
       </div>

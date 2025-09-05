@@ -55,6 +55,48 @@ export type Database = {
           },
         ]
       }
+      event_registrations: {
+        Row: {
+          event_id: string
+          id: string
+          registered_at: string
+          status: string
+          student_id: string
+          ticket_number: string
+        }
+        Insert: {
+          event_id: string
+          id?: string
+          registered_at?: string
+          status?: string
+          student_id: string
+          ticket_number: string
+        }
+        Update: {
+          event_id?: string
+          id?: string
+          registered_at?: string
+          status?: string
+          student_id?: string
+          ticket_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_registrations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_registrations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           budget: number | null
@@ -66,6 +108,7 @@ export type Database = {
           expected_attendees: number | null
           id: string
           is_private: boolean | null
+          registration_enabled: boolean | null
           resources_needed: string | null
           start_date: string
           status: Database["public"]["Enums"]["event_status"] | null
@@ -83,6 +126,7 @@ export type Database = {
           expected_attendees?: number | null
           id?: string
           is_private?: boolean | null
+          registration_enabled?: boolean | null
           resources_needed?: string | null
           start_date: string
           status?: Database["public"]["Enums"]["event_status"] | null
@@ -100,6 +144,7 @@ export type Database = {
           expected_attendees?: number | null
           id?: string
           is_private?: boolean | null
+          registration_enabled?: boolean | null
           resources_needed?: string | null
           start_date?: string
           status?: Database["public"]["Enums"]["event_status"] | null
@@ -144,6 +189,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_ticket_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]

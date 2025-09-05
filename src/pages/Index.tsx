@@ -4,9 +4,11 @@ import { Navigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
 import EventCalendar from "@/components/EventCalendar";
+import StudentRegistrations from "@/components/StudentRegistrations";
 import FeaturesSection from "@/components/FeaturesSection";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -55,8 +57,24 @@ const Index = () => {
         </div>
       )}
       
-     
-      <EventCalendar />
+      {user && profile?.role === 'student' ? (
+        <div className="container mx-auto px-4 py-8">
+          <Tabs defaultValue="calendar" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="calendar">Event Calendar</TabsTrigger>
+              <TabsTrigger value="registrations">My Registrations</TabsTrigger>
+            </TabsList>
+            <TabsContent value="calendar" className="space-y-4">
+              <EventCalendar />
+            </TabsContent>
+            <TabsContent value="registrations" className="space-y-4">
+              <StudentRegistrations />
+            </TabsContent>
+          </Tabs>
+        </div>
+      ) : (
+        <EventCalendar />
+      )}
     
       <Footer />
     </div>

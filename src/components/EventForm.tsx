@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,6 +33,7 @@ const eventSchema = z.object({
   budget: z.number().optional(),
   resources_needed: z.string().optional(),
   is_private: z.boolean().optional(),
+  registration_enabled: z.boolean().optional(),
 }).refine((data) => {
   // Combine date and time for comparison
   const startDateTime = new Date(`${data.start_date.toISOString().split('T')[0]}T${data.start_time}`);
@@ -66,7 +66,8 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
   } = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
     defaultValues: {
-      is_private: false
+      is_private: false,
+      registration_enabled: false
     }
   });
 
@@ -75,6 +76,7 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
   const startTime = watch('start_time');
   const endTime = watch('end_time');
   const isPrivate = watch('is_private');
+  const registrationEnabled = watch('registration_enabled');
 
   const submitEvent = async (data: EventFormData, isDraft: boolean = false) => {
     if (!user) return;
@@ -100,7 +102,8 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
         end_date: endDateTime.toISOString(),
         created_by: user.id,
         status: (isDraft ? 'draft' : 'submitted') as 'draft' | 'submitted',
-        is_private: data.is_private || false
+        is_private: data.is_private || false,
+        registration_enabled: data.registration_enabled || false
       };
 
       const { error: insertError } = await supabase
@@ -276,16 +279,30 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
           />
         </div>
 
-        <div className="space-y-2 flex items-center space-x-2">
-          <Checkbox
-            id="is_private"
-            checked={isPrivate}
-            onCheckedChange={(checked) => setValue('is_private', checked as boolean)}
-            disabled={isLoading}
-          />
-          <Label htmlFor="is_private" className="text-sm font-medium">
-            Private Event (Only visible to your committee)
-          </Label>
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="registration_enabled"
+              checked={registrationEnabled}
+              onCheckedChange={(checked) => setValue('registration_enabled', checked as boolean)}
+              disabled={isLoading}
+            />
+            <Label htmlFor="registration_enabled" className="text-sm font-medium">
+              Enable Student Registration
+            </Label>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is_private"
+              checked={isPrivate}
+              onCheckedChange={(checked) => setValue('is_private', checked as boolean)}
+              disabled={isLoading}
+            />
+            <Label htmlFor="is_private" className="text-sm font-medium">
+              Private Event (Only visible to your committee)
+            </Label>
+          </div>
         </div>
       </div>
 
