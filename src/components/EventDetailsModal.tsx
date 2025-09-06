@@ -178,15 +178,13 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
                 </div>
               )}
 
-              {event.committee_name && (
-                <div className="flex items-start gap-3">
-                  <Users className="h-5 w-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="font-medium">Organized By</p>
-                    <p className="text-sm text-muted-foreground">{event.committee_name}</p>
-                  </div>
+              <div className="flex items-start gap-3">
+                <Users className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium">Organized By</p>
+                  <p className="text-sm text-muted-foreground">{event.committee_name || 'Unknown Committee'}</p>
                 </div>
-              )}
+              </div>
 
               {event.budget && (
                 <div className="flex items-start gap-3">
