@@ -60,10 +60,7 @@ const EventRegistrationTracker = () => {
             ticket_number,
             registered_at,
             status,
-            profiles!inner(
-              full_name,
-              email
-            )
+            student_id
           )
         `)
         .eq('created_by', user?.id)
@@ -72,9 +69,29 @@ const EventRegistrationTracker = () => {
 
       if (error) throw error;
       
+      // Get profile data for students who registered
+      const allRegistrations = data?.flatMap(event => event.event_registrations || []) || [];
+      const studentIds = [...new Set(allRegistrations.map(reg => reg.student_id))];
+      
+      let profilesData: any[] = [];
+      if (studentIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email')
+          .in('id', studentIds);
+        
+        if (!profilesError) {
+          profilesData = profiles || [];
+        }
+      }
+
+      
       const formattedEvents = data?.map(event => ({
         ...event,
-        registrations: event.event_registrations || []
+        registrations: (event.event_registrations || []).map(reg => ({
+          ...reg,
+          profiles: profilesData.find(p => p.id === reg.student_id) || { full_name: 'Unknown', email: 'Unknown' }
+        }))
       })) || [];
       
       setEvents(formattedEvents);
