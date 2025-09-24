@@ -25,7 +25,6 @@ interface Registration {
   ticket_number: string;
   registered_at: string;
   status: string;
-  phone_number?: string;
   profiles: {
     full_name: string;
     email: string;
@@ -61,7 +60,6 @@ const EventRegistrationTracker = () => {
             ticket_number,
             registered_at,
             status,
-            phone_number,
             student_id
           )
         `)
@@ -118,7 +116,6 @@ const EventRegistrationTracker = () => {
     const data = event.registrations.map(registration => ({
       'Full Name': registration.profiles.full_name,
       'Email': registration.profiles.email,
-      'Phone Number': registration.phone_number || 'N/A',
       'Ticket Number': registration.ticket_number,
       'Registration Date': format(new Date(registration.registered_at), 'MMM dd, yyyy HH:mm'),
       'Status': registration.status
@@ -220,9 +217,6 @@ const EventRegistrationTracker = () => {
                               <div>
                                 <div className="font-medium">{registration.profiles.full_name}</div>
                                 <div className="text-sm text-muted-foreground">{registration.profiles.email}</div>
-                                {registration.phone_number && (
-                                  <div className="text-sm text-muted-foreground">Phone: {registration.phone_number}</div>
-                                )}
                                 <div className="text-xs text-muted-foreground">
                                   Registered: {format(new Date(registration.registered_at), 'MMM dd, yyyy HH:mm')}
                                 </div>
