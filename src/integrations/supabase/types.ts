@@ -59,6 +59,7 @@ export type Database = {
         Row: {
           event_id: string
           id: string
+          phone_number: string | null
           registered_at: string
           status: string
           student_id: string
@@ -67,6 +68,7 @@ export type Database = {
         Insert: {
           event_id: string
           id?: string
+          phone_number?: string | null
           registered_at?: string
           status?: string
           student_id: string
@@ -75,6 +77,7 @@ export type Database = {
         Update: {
           event_id?: string
           id?: string
+          phone_number?: string | null
           registered_at?: string
           status?: string
           student_id?: string
@@ -106,6 +109,7 @@ export type Database = {
           description: string | null
           end_date: string
           expected_attendees: number | null
+          google_form_url: string | null
           id: string
           is_private: boolean | null
           registration_enabled: boolean | null
@@ -124,6 +128,7 @@ export type Database = {
           description?: string | null
           end_date: string
           expected_attendees?: number | null
+          google_form_url?: string | null
           id?: string
           is_private?: boolean | null
           registration_enabled?: boolean | null
@@ -142,6 +147,7 @@ export type Database = {
           description?: string | null
           end_date?: string
           expected_attendees?: number | null
+          google_form_url?: string | null
           id?: string
           is_private?: boolean | null
           registration_enabled?: boolean | null
@@ -151,6 +157,39 @@ export type Database = {
           title?: string
           updated_at?: string | null
           venue?: string
+        }
+        Relationships: []
+      }
+      otp_verifications: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          expires_at: string
+          id: string
+          otp_code: string
+          phone_number: string
+          student_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          expires_at: string
+          id?: string
+          otp_code: string
+          phone_number: string
+          student_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          phone_number?: string
+          student_id?: string
+          verified?: boolean | null
         }
         Relationships: []
       }

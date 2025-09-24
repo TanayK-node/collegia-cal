@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Calendar, MapPin, Users, Building2, DollarSign, Clock, UserPlus } from "lucide-react";
+import { Calendar, MapPin, Users, Building2, DollarSign, Clock, UserPlus, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +22,7 @@ interface Event {
   committee_name?: string;
   created_by: string;
   registration_enabled?: boolean;
+  google_form_url?: string;
 }
 
 interface EventDetailsModalProps {
@@ -197,6 +198,21 @@ export const EventDetailsModal = ({ event, isOpen, onClose }: EventDetailsModalP
               )}
             </div>
           </div>
+
+          {/* Google Form Link */}
+          {event.google_form_url && (
+            <div className="mt-6 pt-4 border-t">
+              <h4 className="font-medium mb-3">Additional Information</h4>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => window.open(event.google_form_url, '_blank')}
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Open Google Form
+              </Button>
+            </div>
+          )}
 
           {canRegister && (
             <div className="mt-6 pt-4 border-t">

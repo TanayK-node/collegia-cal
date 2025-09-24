@@ -32,6 +32,7 @@ const eventSchema = z.object({
   expected_attendees: z.number().optional(),
   budget: z.number().optional(),
   resources_needed: z.string().optional(),
+  google_form_url: z.string().url().optional().or(z.literal("")),
   is_private: z.boolean().optional(),
   registration_enabled: z.boolean().optional(),
 }).refine((data) => {
@@ -98,6 +99,7 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
         expected_attendees: data.expected_attendees,
         budget: data.budget,
         resources_needed: data.resources_needed,
+        google_form_url: data.google_form_url || null,
         start_date: startDateTime.toISOString(),
         end_date: endDateTime.toISOString(),
         created_by: user.id,
@@ -324,6 +326,23 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
           rows={3}
           disabled={isLoading}
         />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="google_form_url">Google Form URL (Optional)</Label>
+        <Input
+          id="google_form_url"
+          type="url"
+          placeholder="https://forms.gle/..."
+          {...register('google_form_url')}
+          disabled={isLoading}
+        />
+        {errors.google_form_url && (
+          <p className="text-sm text-destructive">{errors.google_form_url.message}</p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Add a Google Form link for additional event information or registration
+        </p>
       </div>
 
       {error && (
