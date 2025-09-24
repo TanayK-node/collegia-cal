@@ -223,6 +223,84 @@ export type Database = {
         }
         Relationships: []
       }
+      room_bookings: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          event_id: string
+          id: string
+          room_id: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          event_id: string
+          id?: string
+          room_id: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          event_id?: string
+          id?: string
+          room_id?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_bookings_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: true
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_bookings_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          capacity: number | null
+          created_at: string | null
+          floor_number: number
+          has_projector: boolean | null
+          has_whiteboard: boolean | null
+          id: string
+          room_name: string
+          room_number: string
+          updated_at: string | null
+        }
+        Insert: {
+          capacity?: number | null
+          created_at?: string | null
+          floor_number: number
+          has_projector?: boolean | null
+          has_whiteboard?: boolean | null
+          id?: string
+          room_name: string
+          room_number: string
+          updated_at?: string | null
+        }
+        Update: {
+          capacity?: number | null
+          created_at?: string | null
+          floor_number?: number
+          has_projector?: boolean | null
+          has_whiteboard?: boolean | null
+          id?: string
+          room_name?: string
+          room_number?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

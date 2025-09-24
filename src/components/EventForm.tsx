@@ -15,6 +15,7 @@ import { CalendarIcon, Loader2, Save, Send, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import RoomBookingSelector from './RoomBookingSelector';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -35,6 +36,7 @@ const eventSchema = z.object({
   google_form_url: z.string().url().optional().or(z.literal("")),
   is_private: z.boolean().optional(),
   registration_enabled: z.boolean().optional(),
+  room_id: z.string().optional(),
 }).refine((data) => {
   // Combine date and time for comparison
   const startDateTime = new Date(`${data.start_date.toISOString().split('T')[0]}T${data.start_time}`);
@@ -56,6 +58,8 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [roomDetails, setRoomDetails] = useState<string>('');
 
   const {
     register,
@@ -72,12 +76,27 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
     }
   });
 
+  // Custom reset that also resets room selection
+  const resetForm = () => {
+    reset();
+    setSelectedRoomId(null);
+    setRoomDetails('');
+  };
+
   const startDate = watch('start_date');
   const endDate = watch('end_date');
   const startTime = watch('start_time');
   const endTime = watch('end_time');
   const isPrivate = watch('is_private');
   const registrationEnabled = watch('registration_enabled');
+
+  // Calculate start and end datetime for room availability checking
+  const startDateTime = startDate && startTime 
+    ? new Date(`${startDate.toISOString().split('T')[0]}T${startTime}`)
+    : undefined;
+  const endDateTime = endDate && endTime
+    ? new Date(`${endDate.toISOString().split('T')[0]}T${endTime}`)
+    : undefined;
 
   const submitEvent = async (data: EventFormData, isDraft: boolean = false) => {
     if (!user) return;
@@ -108,15 +127,34 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
         registration_enabled: data.registration_enabled || false
       };
 
-      const { error: insertError } = await supabase
+      const { data: eventResult, error: insertError } = await supabase
         .from('events')
-        .insert(eventData);
+        .insert(eventData)
+        .select()
+        .single();
 
       if (insertError) throw insertError;
 
+      // If a room is selected, create the room booking
+      if (selectedRoomId && eventResult) {
+        const { error: bookingError } = await supabase
+          .from('room_bookings')
+          .insert({
+            room_id: selectedRoomId,
+            event_id: eventResult.id,
+            start_time: startDateTime!.toISOString(),
+            end_time: endDateTime!.toISOString()
+          });
+
+        if (bookingError) {
+          console.error('Failed to create room booking:', bookingError);
+          // Don't throw error here as the event was created successfully
+        }
+      }
+
       const message = isDraft ? 'Event saved as draft!' : 'Event submitted for approval!';
       setSuccess(message);
-      reset();
+      resetForm();
       setTimeout(() => {
         onSuccess();
       }, 1500);
@@ -155,8 +193,10 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
           <Label htmlFor="venue">Venue *</Label>
           <Input
             id="venue"
+            value={roomDetails || watch('venue') || ''}
             {...register('venue')}
             disabled={isLoading}
+            placeholder={roomDetails ? "Room selected below" : "Enter venue or select a room"}
           />
           {errors.venue && (
             <p className="text-sm text-destructive">{errors.venue.message}</p>
@@ -344,6 +384,25 @@ const EventForm = ({ onSuccess }: EventFormProps) => {
           Add a Google Form link for additional event information or registration
         </p>
       </div>
+
+      {/* Room Booking Section */}
+      <Card>
+        <CardContent className="pt-6">
+          <RoomBookingSelector
+            selectedRoomId={selectedRoomId}
+            onRoomSelect={(roomId, details) => {
+              setSelectedRoomId(roomId);
+              setRoomDetails(details);
+              if (details) {
+                setValue('venue', details);
+              }
+            }}
+            startDateTime={startDateTime}
+            endDateTime={endDateTime}
+            disabled={isLoading}
+          />
+        </CardContent>
+      </Card>
 
       {error && (
         <Alert>
