@@ -74,11 +74,11 @@ const RoomBookingSelector = ({
     if (!startDateTime || !endDateTime) return;
 
     try {
+      // Check for overlapping bookings using proper time range overlap
       const { data, error } = await supabase
         .from('room_bookings')
         .select('room_id')
-        .overlaps('start_time', startDateTime.toISOString())
-        .overlaps('end_time', endDateTime.toISOString());
+        .or(`and(start_time.lt.${endDateTime.toISOString()},end_time.gt.${startDateTime.toISOString()})`);
 
       if (error) throw error;
 

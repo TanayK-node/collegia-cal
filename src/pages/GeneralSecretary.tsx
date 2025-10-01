@@ -5,9 +5,10 @@ import { Navigate, Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { LogOut, FileText, Clock, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
+import { LogOut, FileText, Clock, CheckCircle, AlertCircle, Calendar, Building } from 'lucide-react';
 import GSEventApproval from '@/components/GSEventApproval';
 import GSEventsList from '@/components/GSEventsList';
+import RoomBookingsManager from '@/components/RoomBookingsManager';
 
 const GeneralSecretary = () => {
   const { user, profile, signOut, loading } = useAuth();
@@ -68,7 +69,7 @@ const GeneralSecretary = () => {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="pending" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               Pending Approval
@@ -80,6 +81,10 @@ const GeneralSecretary = () => {
             <TabsTrigger value="all" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               All Events
+            </TabsTrigger>
+            <TabsTrigger value="rooms" className="flex items-center gap-2">
+              <Building className="h-4 w-4" />
+              Room Bookings
             </TabsTrigger>
           </TabsList>
 
@@ -136,6 +141,23 @@ const GeneralSecretary = () => {
                   status="all" 
                   refreshKey={refreshKey}
                 />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="rooms" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building className="h-5 w-5" />
+                  Room Bookings Overview
+                </CardTitle>
+                <CardDescription>
+                  View all room bookings and which committees booked them.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RoomBookingsManager />
               </CardContent>
             </Card>
           </TabsContent>
