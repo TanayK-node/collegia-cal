@@ -27,8 +27,9 @@ const EventCalendar = () => {
       let query = supabase.from('events').select('*');
       
       // Only show final approved events for students and non-authenticated users
+      // Exclude cancelled events from public view
       if (!user || profile?.role === 'student') {
-        query = query.eq('status', 'final_approved');
+        query = query.eq('status', 'final_approved').neq('status', 'cancelled');
       }
       // Show all relevant events for other roles (handled by RLS policies)
       

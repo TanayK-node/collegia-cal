@@ -9,8 +9,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Send } from 'lucide-react';
+import { Edit, Trash2, Send, XCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface Event {
   id: string;
@@ -19,7 +29,7 @@ interface Event {
   start_date: string;
   end_date: string;
   venue: string;
-  status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected';
+  status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected' | 'cancelled';
   department: string | null;
   expected_attendees: number | null;
   budget: number | null;
@@ -31,6 +41,8 @@ const CommitteeCalendar = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [eventToCancel, setEventToCancel] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEvents();
@@ -62,6 +74,7 @@ const CommitteeCalendar = () => {
       case 'gs_approved': return '#3b82f6'; // blue
       case 'final_approved': return '#10b981'; // green
       case 'rejected': return '#ef4444'; // red
+      case 'cancelled': return '#64748b'; // slate
       default: return '#6b7280';
     }
   };
@@ -73,6 +86,7 @@ const CommitteeCalendar = () => {
       case 'gs_approved': return 'Pending Dean Approval';
       case 'final_approved': return 'Approved';
       case 'rejected': return 'Rejected';
+      case 'cancelled': return 'Cancelled';
       default: return status;
     }
   };
@@ -118,6 +132,31 @@ const CommitteeCalendar = () => {
       setSelectedEvent(null);
     } catch (err: any) {
       setError(err.message);
+    }
+  };
+
+  const handleCancelClick = (eventId: string) => {
+    setEventToCancel(eventId);
+    setShowCancelDialog(true);
+  };
+
+  const confirmCancelEvent = async () => {
+    if (!eventToCancel) return;
+
+    try {
+      const { error } = await supabase
+        .from('events')
+        .update({ status: 'cancelled' })
+        .eq('id', eventToCancel);
+
+      if (error) throw error;
+      fetchEvents();
+      setSelectedEvent(null);
+      setShowCancelDialog(false);
+      setEventToCancel(null);
+    } catch (err: any) {
+      setError(err.message);
+      setShowCancelDialog(false);
     }
   };
 
@@ -175,6 +214,10 @@ const CommitteeCalendar = () => {
                 <div className="w-4 h-4 rounded" style={{ backgroundColor: '#ef4444' }}></div>
                 <span className="text-sm">Rejected</span>
               </div>
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 rounded" style={{ backgroundColor: '#64748b' }}></div>
+                <span className="text-sm">Cancelled</span>
+              </div>
             </CardContent>
           </Card>
 
@@ -221,12 +264,45 @@ const CommitteeCalendar = () => {
                       </Button>
                     </>
                   )}
+                  {(selectedEvent.status === 'submitted' || 
+                    selectedEvent.status === 'gs_approved' || 
+                    selectedEvent.status === 'final_approved') && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleCancelClick(selectedEvent.id)}
+                    >
+                      <XCircle className="mr-1 h-3 w-3" />
+                      Cancel Event
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
           )}
         </div>
       </div>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will cancel the event and remove it from the public calendar. 
+              The event will still be visible to the General Secretary and Dean with a "Cancelled" status.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setEventToCancel(null)}>
+              No, keep event
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelEvent}>
+              Yes, cancel event
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

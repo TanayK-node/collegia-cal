@@ -22,7 +22,7 @@ interface Event {
 }
 
 interface DeanEventsListProps {
-  status: 'gs_approved' | 'final_approved' | 'rejected' | 'all';
+  status: 'gs_approved' | 'final_approved' | 'rejected' | 'cancelled' | 'all';
 }
 
 const DeanEventsList = ({ status }: DeanEventsListProps) => {
@@ -40,7 +40,7 @@ const DeanEventsList = ({ status }: DeanEventsListProps) => {
       if (status !== 'all') {
         query = query.eq('status', status);
       } else {
-        query = query.in('status', ['gs_approved', 'final_approved', 'rejected']);
+        query = query.in('status', ['gs_approved', 'final_approved', 'rejected', 'cancelled']);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -62,6 +62,8 @@ const DeanEventsList = ({ status }: DeanEventsListProps) => {
         return <Badge className="bg-success text-success-foreground">Final Approved</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
+      case 'cancelled':
+        return <Badge variant="secondary">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }

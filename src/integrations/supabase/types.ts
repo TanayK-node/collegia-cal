@@ -322,6 +322,7 @@ export type Database = {
         | "gs_approved"
         | "final_approved"
         | "rejected"
+        | "cancelled"
       user_role: "committee" | "general_secretary" | "dean" | "student"
     }
     CompositeTypes: {
@@ -456,6 +457,7 @@ export const Constants = {
         "gs_approved",
         "final_approved",
         "rejected",
+        "cancelled",
       ],
       user_role: ["committee", "general_secretary", "dean", "student"],
     },

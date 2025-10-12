@@ -23,7 +23,7 @@ interface Event {
 }
 
 interface GSEventsListProps {
-  status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected' | 'all';
+  status: 'draft' | 'submitted' | 'gs_approved' | 'final_approved' | 'rejected' | 'cancelled' | 'all';
   refreshKey?: number;
 }
 
@@ -43,7 +43,7 @@ const GSEventsList = ({ status, refreshKey }: GSEventsListProps) => {
       if (status !== 'all') {
         query = query.eq('status', status);
       } else {
-        query = query.in('status', ['submitted', 'gs_approved', 'final_approved', 'rejected']);
+        query = query.in('status', ['submitted', 'gs_approved', 'final_approved', 'rejected', 'cancelled']);
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
@@ -67,6 +67,8 @@ const GSEventsList = ({ status, refreshKey }: GSEventsListProps) => {
         return <Badge className="bg-success text-success-foreground">Approved</Badge>;
       case 'rejected':
         return <Badge variant="destructive">Rejected</Badge>;
+      case 'cancelled':
+        return <Badge variant="secondary">Cancelled</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
