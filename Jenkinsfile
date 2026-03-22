@@ -30,10 +30,13 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        sstage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying the new image to the Kubernetes cluster...'
-                sh 'echo "Simulating Kubernetes deployment for now..."'
+                sh 'kubectl apply -f k8s/'
+                
+                echo 'Checking deployment status...'
+                sh 'kubectl rollout status deployment/collegia-frontend-deployment'
             }
         }
     }

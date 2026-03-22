@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collegia-frontend-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: collegia-frontend
+  template:
+    metadata:
+      labels:
+        app: collegia-frontend
+    spec:
+      containers:
+      - name: collegia-frontend
+        image: collegia-frontend:latest
+        imagePullPolicy: Never # Forces K8s to use the image Jenkins just built locally
+        ports:
+        - containerPort: 80
