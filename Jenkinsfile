@@ -30,7 +30,7 @@ pipeline {
             }
         }
 
-        sstage('Deploy to Kubernetes') {
+        stage('Deploy to Kubernetes') {
             steps {
                 echo 'Deploying the new image to the Kubernetes cluster...'
                 sh 'kubectl apply -f k8s/'
