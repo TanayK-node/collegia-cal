@@ -17,7 +17,7 @@ pipeline {
                     unzip -q -o sonar-scanner.zip
                     
                     echo "Running Analysis..."
-                    ./sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner -Dsonar.host.url=http://host.docker.internal:9000 -Dsonar.login=sqa_aaeec05ed363353e3528735441f1cf0f386a43de
+                    ./sonar-scanner-5.0.1.3006-linux/bin/sonar-scanner -Dsonar.host.url=http://host.docker.internal:9000 -Dsonar.login=sqa_fc181baef1e9e953a34cb5a4948aaa459e2f8915
                 '''
             }
         }
