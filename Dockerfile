@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Copy the dependency files
 COPY package.json bun.lockb ./
-
+#
 # Install dependencies using Bun
 RUN bun install
 
